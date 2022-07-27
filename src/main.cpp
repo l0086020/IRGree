@@ -7,208 +7,362 @@
 #include <Blinker.h>
 
 char auth[] = "839d1d3c4112";
-char ssid[] = "Smart Home";
+char ssid[] = "TP-LINK_7F78";
 char pswd[] = "321162955";
 
 int nowtemp = 24; 
 int num_mode = 1; 
-int nowfan = 5;   
+int nowfan = 2;   
 
 BlinkerNumber NUM1("fan");
 BlinkerNumber NUM2("settemp");
-BlinkerButton Kelvinator_power("btn-pwr");
-BlinkerButton Kelvinator_setmode("btn-mode");
-BlinkerButton Kelvinator_Light("btn-deng");
-BlinkerButton Kelvinator_sxfan("btn-sx");
+
+BlinkerButton Button_power("btn-pwr");
+BlinkerButton Button_Light("btn-deng");
+BlinkerButton Button_sxfan("btn-sx");
+BlinkerButton Button_save("btn-save");
+
+BlinkerButton Button_Cold("btn-cold");
+BlinkerButton Button_Hot("btn-hot");
+BlinkerButton Button_Wind("btn-wind");
+BlinkerButton Button_Hum("btn-hum");
+
 BlinkerSlider Slider1("ran-wen");
 BlinkerSlider Slider2("ran-fan");
 
 const uint16_t kIrLed = 14;
+uint8_t KeyStatus = 0x02,ModeStatus = 1;
 IRKelvinatorAC ac(kIrLed);
 
-void printState() {
-  Serial.println("Kelvinator A/C remote is in the following state:");
-  Serial.printf("  %s\n", ac.toString().c_str());
-
-  unsigned char* ir_code = ac.getRaw();
-  Serial.print("IR Code: 0x");
-  for (uint8_t i = 0; i < kKelvinatorStateLength; i++)
-    Serial.printf("%02X", ir_code[i]);
-  Serial.println();
-}
-
 //空调电源开关
-void Kelvinator_power_callback(const String &state)
+void Button_power_callback(const String &state)
 {
-  BLINKER_LOG("get button state: ", state);
-
   if (state == BLINKER_CMD_ON)
   {
+    Button_power.print("on");
+    Blinker.vibrate(1000);
     ac.on();
     ac.setFan(5);
     ac.setMode(kKelvinatorCool);
     ac.setTemp(26);
     ac.setLight(true);
     ac.send();
-    Kelvinator_power.icon("fal fa-power-off");
-    Kelvinator_power.color("#00FF00");
-    Kelvinator_power.text("开");
-    Kelvinator_power.print("on");
+    KeyStatus |= 1<<0;
   }
   else if (state == BLINKER_CMD_OFF)
   {
+    Button_power.print("off");
+    Blinker.vibrate(1000);
     ac.off();
     ac.setLight(true);
     ac.send();
-    Kelvinator_power.icon("fal fa-power-off");
-    Kelvinator_power.color("#FF0000");
-    Kelvinator_power.text("关");
-    Kelvinator_power.print("off");
+    KeyStatus &= ~(1<<0);
   }
 }
 
 //空调灯光
-void Kelvinator_Light_callback(const String &state)
+void Button_Light_callback(const String &state)
 {
-  BLINKER_LOG("get button state: ", state);
   if (state == BLINKER_CMD_ON)
   {
+    Button_Light.print("on");
+    Blinker.vibrate(1000);
     ac.setLight(true);
     ac.send();
-    Kelvinator_Light.color("#00FF00");
-    Kelvinator_Light.text("灯光开");
-    Kelvinator_Light.print("on");
+    KeyStatus |= 1<<1;
   }
   else if (state == BLINKER_CMD_OFF)
   {
+    Button_Light.print("off");
+    Blinker.vibrate(1000);
     ac.setLight(false);
     ac.send();
-    Kelvinator_Light.color("#999999");
-    Kelvinator_Light.text("灯光关");
-    Kelvinator_Light.print("off");
+    KeyStatus &= ~(1<<1);
   }
 }
 
 //上下扇风
-void Kelvinator_sxfan_callback(const String &state)
+void Button_sxfan_callback(const String &state)
 {
-  BLINKER_LOG("get button state: ", state);
   if (state == BLINKER_CMD_ON)
   {
+    Button_sxfan.print("on");
+    Blinker.vibrate(1000);
     // ac.setSwingVertical(true);
     ac.send();
-    Kelvinator_sxfan.color("#00FF00");
-    Kelvinator_sxfan.text("上下风");
-    Kelvinator_sxfan.print("on");
+    KeyStatus |= 1<<2;
   }
   else if (state == BLINKER_CMD_OFF)
   {
+    Button_sxfan.print("off");
+    Blinker.vibrate(1000);
     // ac.setSwingVertical(false);
     ac.send();
-    Kelvinator_sxfan.color("#999999");
-    Kelvinator_sxfan.text("上下风");
-    Kelvinator_sxfan.print("off");
+    KeyStatus &= ~(1<<2);
   }
+}
+
+//节能开关
+void Button_Save_callback(const String &state)
+{
+  if (state == BLINKER_CMD_ON)
+  {
+    Button_save.print("on");
+    Blinker.vibrate(1000);
+    // ac.setSwingVertical(true);
+    ac.send();
+    KeyStatus |= 1<<3;
+  }
+  else if (state == BLINKER_CMD_OFF)
+  {
+    Button_save.print("off");
+    Blinker.vibrate(1000);
+    // ac.setSwingVertical(false);
+    ac.send();
+    KeyStatus &= ~(1<<3);
+  }
+}
+
+//制冷开关
+void Button_Cold_callback(const String &state)
+{
+  Button_Cold.color("#00FF00");
+  Button_Hot.color("#808080");
+  Button_Wind.color("#808080");
+  Button_Hum.color("#808080");
+  Button_Cold.print();
+  Button_Hot.print();
+  Button_Wind.print();
+  Button_Hum.print();
+
+  Blinker.vibrate(1000);
+
+  ModeStatus = 0x01;
+  ac.setMode(kKelvinatorCool);
+  ac.send();
+}
+
+//制热开关
+void Button_Hot_callback(const String &state)
+{
+  Button_Cold.color("#808080");
+  Button_Hot.color("#FF0000");
+  Button_Wind.color("#808080");
+  Button_Hum.color("#808080");
+  Button_Cold.print();
+  Button_Hot.print();
+  Button_Wind.print();
+  Button_Hum.print();
+
+  Blinker.vibrate(1000);
+
+  ModeStatus = 0x02;
+  ac.setMode(kKelvinatorHeat);
+  ac.send();
+}
+
+//送风开关
+void Button_Wind_callback(const String &state)
+{
+  Button_Cold.color("#808080");
+  Button_Hot.color("#808080");
+  Button_Wind.color("#EE00EE");
+  Button_Hum.color("#808080");
+  Button_Cold.print();
+  Button_Hot.print();
+  Button_Wind.print();
+  Button_Hum.print();
+
+  Blinker.vibrate(1000);
+
+  ModeStatus = 0x04;
+  ac.setMode(kKelvinatorFan);
+  ac.send();
+}
+
+//除湿开关
+void Button_Hum_callback(const String &state)
+{
+  Button_Cold.color("#808080");
+  Button_Hot.color("#808080");
+  Button_Wind.color("#808080");
+  Button_Hum.color("#0000FF");
+  Button_Cold.print();
+  Button_Hot.print();
+  Button_Wind.print();
+  Button_Hum.print();
+
+  Blinker.vibrate(1000);
+
+  ModeStatus = 0x08;
+  ac.setMode(kKelvinatorDry);
+  ac.send();
 }
 
 //心跳包
 void heartbeat()
 {
-  switch (num_mode)
+  switch(ModeStatus)
   {
-    case 1:
+    case 0x01:
+      Button_Cold.color("#00FF00");
+      Button_Hot.color("#808080");
+      Button_Wind.color("#808080");
+      Button_Hum.color("#808080");
+    break;
 
-      Kelvinator_setmode.icon("far fa-recycle");
-      Kelvinator_setmode.color("#7FFFD4");
-      Kelvinator_setmode.text("自动");
+    case 0x02:
+      Button_Cold.color("#808080");
+      Button_Hot.color("#FF0000");
+      Button_Wind.color("#808080");
+      Button_Hum.color("#808080");
+    break;
 
-      break;
-    case 2:
+    case 0x04:
+      Button_Cold.color("#808080");
+      Button_Hot.color("#808080");
+      Button_Wind.color("#EE00EE");
+      Button_Hum.color("#808080");
+    break;
 
-      Kelvinator_setmode.icon("fas fa-snowflake");
-      Kelvinator_setmode.color("#1E90FF");
-      Kelvinator_setmode.text("制冷");
-      break;
-    case 3:
-
-      Kelvinator_setmode.icon("fas fa-tint");
-      Kelvinator_setmode.color("#7CFC00");
-      Kelvinator_setmode.text("除湿");
-      break;
-    case 4:
-
-      Kelvinator_setmode.icon("fab fa-first-order-alt");
-      Kelvinator_setmode.color("#E0FFFF");
-      Kelvinator_setmode.text("送风");
-      break;
-    case 5:
-
-      Kelvinator_setmode.icon("fas fa-sun");
-      Kelvinator_setmode.color("#FF0000");
-      Kelvinator_setmode.text("制热");
-      break;
+    case 0x08:
+      Button_Cold.color("#808080");
+      Button_Hot.color("#808080");
+      Button_Wind.color("#808080");
+      Button_Hum.color("#0000FF");
+    break;
   }
-  Kelvinator_setmode.print();
+
+  Button_Cold.print();
+  Button_Hot.print();
+  Button_Wind.print();
+  Button_Hum.print();
+
+  switch (KeyStatus)
+  {
+    case 0x00:
+      Button_power.print("off");
+      Button_Light.print("off");
+      Button_sxfan.print("off");
+      Button_save.print("off");
+    break;
+
+    case 0x01:
+      Button_power.print("on");
+      Button_Light.print("off");
+      Button_sxfan.print("off");
+      Button_save.print("off");
+    break;
+
+    case 0x02:
+      Button_power.print("off");
+      Button_Light.print("on");
+      Button_sxfan.print("off");
+      Button_save.print("off");
+    break;
+
+    case 0x03:
+      Button_power.print("on");
+      Button_Light.print("on");
+      Button_sxfan.print("off");
+      Button_save.print("off");
+    break;
+
+    case 0x04:
+      Button_power.print("off");
+      Button_Light.print("off");
+      Button_sxfan.print("on");
+      Button_save.print("off");
+    break;
+
+    case 0x05:
+      Button_power.print("on");
+      Button_Light.print("off");
+      Button_sxfan.print("on");
+      Button_save.print("off");
+    break;
+
+    case 0x06:
+      Button_power.print("off");
+      Button_Light.print("on");
+      Button_sxfan.print("on");
+      Button_save.print("off");
+    break;
+
+    case 0x07:
+      Button_power.print("on");
+      Button_Light.print("on");
+      Button_sxfan.print("on");
+      Button_save.print("off");
+    break;
+
+    case 0x08:
+      Button_power.print("off");
+      Button_Light.print("off");
+      Button_sxfan.print("off");
+      Button_save.print("on");
+    break;
+
+    case 0x09:
+      Button_power.print("on");
+      Button_Light.print("off");
+      Button_sxfan.print("off");
+      Button_save.print("on");
+    break;
+
+    case 0x0A:
+      Button_power.print("off");
+      Button_Light.print("on");
+      Button_sxfan.print("off");
+      Button_save.print("on");
+    break;
+
+    case 0x0B:
+      Button_power.print("on");
+      Button_Light.print("on");
+      Button_sxfan.print("off");
+      Button_save.print("on");
+    break;
+
+    case 0x0C:
+      Button_power.print("off");
+      Button_Light.print("off");
+      Button_sxfan.print("on");
+      Button_save.print("on");
+    break;
+
+    case 0x0D:
+      Button_power.print("on");
+      Button_Light.print("off");
+      Button_sxfan.print("on");
+      Button_save.print("on");
+    break;
+
+    case 0x0E:
+      Button_power.print("off");
+      Button_Light.print("on");
+      Button_sxfan.print("on");
+      Button_save.print("on");
+    break;
+
+    case 0x0F:
+      Button_power.print("on");
+      Button_Light.print("on");
+      Button_sxfan.print("on");
+      Button_save.print("on");
+    break;
+  }
+  NUM1.print(nowfan);
   NUM2.print(nowtemp);
+  Slider1.print(nowtemp);
+  Slider2.print(nowfan);
 }
-//空调模式按钮
-void Kelvinator_setmode_callback(const String &state)
-{
-  if (state == BLINKER_CMD_BUTTON_TAP)
-  {
-    num_mode++;
-    if (num_mode >= 6)
-    {
-      num_mode = 1;
-    }
-
-    switch (num_mode)
-    {
-      case 1:
-        ac.setMode(kKelvinatorAuto);
-        Kelvinator_setmode.icon("fal fa-recycle");
-        Kelvinator_setmode.color("#008000");
-        Kelvinator_setmode.text("自动");
-        break;
-
-      case 2:
-        ac.setMode(kKelvinatorCool);
-        Kelvinator_setmode.icon("fal fa-snowflake");
-        Kelvinator_setmode.color("#1E90FF");
-        Kelvinator_setmode.text("制冷");
-        break;
-
-      case 3:
-        ac.setMode(kKelvinatorDry);
-        Kelvinator_setmode.icon("fal fa-tint-slash");
-        Kelvinator_setmode.color("#87CEFA");
-        Kelvinator_setmode.text("除湿");
-        break;
-
-      case 4:
-        ac.setMode(kKelvinatorFan);
-        Kelvinator_setmode.icon("fab fa-first-order-alt");
-        Kelvinator_setmode.color("#2E8B57");
-        Kelvinator_setmode.text("送风");
-        break;
-
-      case 5:
-        ac.setMode(kKelvinatorHeat);
-        Kelvinator_setmode.icon("fas fa-sun");
-        Kelvinator_setmode.color("#FF0000");
-        Kelvinator_setmode.text("制热");
-        break;
-    }
-    Kelvinator_setmode.print();
-    ac.send();
-  }
-}
-
 
 //空调风速
 void slider2_callback(int32_t value)
 {
   nowfan=value;
+  Blinker.vibrate(50);
   NUM1.print(nowfan);
   ac.setFan(nowfan);
   ac.setXFan(true);
@@ -219,6 +373,7 @@ void slider2_callback(int32_t value)
 void slider1_callback(int32_t value)
 {
   nowtemp=value;
+  Blinker.vibrate(50);
   NUM2.print(nowtemp);
   ac.setTemp(nowtemp);
   ac.send();
@@ -227,13 +382,18 @@ void slider1_callback(int32_t value)
 void setup()
 {
   ac.begin();
-  Kelvinator_power.attach(Kelvinator_power_callback);
-  Kelvinator_setmode.attach(Kelvinator_setmode_callback);
-  Kelvinator_Light.attach(Kelvinator_Light_callback);
-  Kelvinator_sxfan.attach(Kelvinator_sxfan_callback);
+
+  Button_power.attach(Button_power_callback);
+  Button_Light.attach(Button_Light_callback);
+  Button_sxfan.attach(Button_sxfan_callback);
+  Button_save.attach(Button_Save_callback);
+  Button_Cold.attach(Button_Cold_callback);
+  Button_Hot.attach(Button_Hot_callback);
+  Button_Wind.attach(Button_Wind_callback);
+  Button_Hum.attach(Button_Hum_callback);
+
   Slider1.attach(slider1_callback);
   Slider2.attach(slider2_callback);
-  printState();
   Blinker.attachHeartbeat(heartbeat);
   Blinker.begin(auth,ssid,pswd); 
 }
