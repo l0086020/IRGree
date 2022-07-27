@@ -290,7 +290,7 @@ void IRGreeAC::setMode(const uint8_t new_mode) {
     // AUTO is locked to 25C
     case kGreeAuto: setTemp(25); break;
     // DRY always sets the fan to 1.
-    case kGreeDry: setFan(1); break;
+    case kGreeDry: setFan(2); break;
     case kGreeCool:
     case kGreeFan:
     case kGreeEcono:

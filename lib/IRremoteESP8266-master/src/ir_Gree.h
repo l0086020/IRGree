@@ -99,7 +99,7 @@ const uint8_t kGreeEcono = 5;
 const uint8_t kGreeFanAuto = 0;
 const uint8_t kGreeFanMin  = 1;
 const uint8_t kGreeFanMed  = 2;
-const uint8_t kGreeFanMax  = 3;
+const uint8_t kGreeFanMax  = 5;
 
 const uint8_t kGreeMinTempC = 16;  // Celsius
 const uint8_t kGreeMaxTempC = 30;  // Celsius

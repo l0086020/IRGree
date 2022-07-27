@@ -3,16 +3,12 @@
 #include <Arduino.h>
 #include <IRremoteESP8266.h>
 #include <IRsend.h>
-#include <ir_Kelvinator.h>
+#include <ir_Gree.h>
 #include <Blinker.h>
 
 char auth[] = "839d1d3c4112";
 char ssid[] = "TP-LINK_7F78";
 char pswd[] = "321162955";
-
-int nowtemp = 24; 
-int num_mode = 1; 
-int nowfan = 2;   
 
 BlinkerNumber NUM1("fan");
 BlinkerNumber NUM2("settemp");
@@ -31,33 +27,32 @@ BlinkerSlider Slider1("ran-wen");
 BlinkerSlider Slider2("ran-fan");
 
 const uint16_t kIrLed = 14;
-uint8_t KeyStatus = 0x02,ModeStatus = 1;
-IRKelvinatorAC ac(kIrLed);
+uint8_t KeyStatus = 0x02;
+IRGreeAC ac(kIrLed);
+
+void heartbeat(void);
+
+int nowtemp = 26;
+int nowfan = 2;
 
 //空调电源开关
 void Button_power_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
   {
-    Button_power.print("on");
-    Blinker.vibrate(1000);
     ac.on();
-    ac.setFan(5);
-    ac.setMode(kKelvinatorCool);
-    ac.setTemp(26);
-    ac.setLight(true);
     ac.send();
     KeyStatus |= 1<<0;
   }
   else if (state == BLINKER_CMD_OFF)
   {
-    Button_power.print("off");
-    Blinker.vibrate(1000);
     ac.off();
-    ac.setLight(true);
     ac.send();
     KeyStatus &= ~(1<<0);
   }
+
+  Blinker.vibrate(1000);
+  heartbeat();
 }
 
 //空调灯光
@@ -65,20 +60,21 @@ void Button_Light_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
   {
-    Button_Light.print("on");
-    Blinker.vibrate(1000);
     ac.setLight(true);
     ac.send();
     KeyStatus |= 1<<1;
   }
   else if (state == BLINKER_CMD_OFF)
   {
-    Button_Light.print("off");
-    Blinker.vibrate(1000);
+    if(ac.getPower()) ac.on();
+    else ac.off();
     ac.setLight(false);
     ac.send();
     KeyStatus &= ~(1<<1);
   }
+
+  Blinker.vibrate(1000);
+  heartbeat();
 }
 
 //上下扇风
@@ -86,20 +82,19 @@ void Button_sxfan_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
   {
-    Button_sxfan.print("on");
-    Blinker.vibrate(1000);
-    // ac.setSwingVertical(true);
+    ac.setSwingVertical(true,kGreeSwingLastPos);
     ac.send();
     KeyStatus |= 1<<2;
   }
   else if (state == BLINKER_CMD_OFF)
   {
-    Button_sxfan.print("off");
-    Blinker.vibrate(1000);
-    // ac.setSwingVertical(false);
+    ac.setSwingVertical(false,kGreeSwingHOff);
     ac.send();
     KeyStatus &= ~(1<<2);
   }
+
+  Blinker.vibrate(1000);
+  heartbeat();
 }
 
 //节能开关
@@ -107,129 +102,107 @@ void Button_Save_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
   {
-    Button_save.print("on");
-    Blinker.vibrate(1000);
-    // ac.setSwingVertical(true);
+    ac.setEcono(true);
     ac.send();
     KeyStatus |= 1<<3;
   }
   else if (state == BLINKER_CMD_OFF)
   {
-    Button_save.print("off");
-    Blinker.vibrate(1000);
-    // ac.setSwingVertical(false);
+    ac.setEcono(false);
     ac.send();
     KeyStatus &= ~(1<<3);
   }
+
+  Blinker.vibrate(1000);
+  heartbeat();
 }
 
-//制冷开关
+//制冷模式
 void Button_Cold_callback(const String &state)
 {
-  Button_Cold.color("#00FF00");
-  Button_Hot.color("#808080");
-  Button_Wind.color("#808080");
-  Button_Hum.color("#808080");
-  Button_Cold.print();
-  Button_Hot.print();
-  Button_Wind.print();
-  Button_Hum.print();
-
   Blinker.vibrate(1000);
-
-  ModeStatus = 0x01;
-  ac.setMode(kKelvinatorCool);
+  ac.setFan(1);
+  ac.setMode(GREE_COOL);
   ac.send();
+
+  heartbeat();
 }
 
-//制热开关
+//制热模式
 void Button_Hot_callback(const String &state)
 {
-  Button_Cold.color("#808080");
-  Button_Hot.color("#FF0000");
-  Button_Wind.color("#808080");
-  Button_Hum.color("#808080");
-  Button_Cold.print();
-  Button_Hot.print();
-  Button_Wind.print();
-  Button_Hum.print();
-
   Blinker.vibrate(1000);
 
-  ModeStatus = 0x02;
-  ac.setMode(kKelvinatorHeat);
+  ac.setFan(1);
+  ac.setMode(GREE_HEAT);
   ac.send();
+
+  heartbeat();
 }
 
-//送风开关
+//送风模式
 void Button_Wind_callback(const String &state)
 {
-  Button_Cold.color("#808080");
-  Button_Hot.color("#808080");
-  Button_Wind.color("#EE00EE");
-  Button_Hum.color("#808080");
-  Button_Cold.print();
-  Button_Hot.print();
-  Button_Wind.print();
-  Button_Hum.print();
-
   Blinker.vibrate(1000);
 
-  ModeStatus = 0x04;
-  ac.setMode(kKelvinatorFan);
+  ac.setFan(1);
+  ac.setMode(GREE_FAN);
   ac.send();
+
+  heartbeat();
 }
 
-//除湿开关
+//除湿模式
 void Button_Hum_callback(const String &state)
 {
-  Button_Cold.color("#808080");
-  Button_Hot.color("#808080");
-  Button_Wind.color("#808080");
-  Button_Hum.color("#0000FF");
-  Button_Cold.print();
-  Button_Hot.print();
-  Button_Wind.print();
-  Button_Hum.print();
-
   Blinker.vibrate(1000);
 
-  ModeStatus = 0x08;
-  ac.setMode(kKelvinatorDry);
+  ac.setMode(GREE_DRY);
   ac.send();
+
+  heartbeat();
 }
 
 //心跳包
 void heartbeat()
 {
-  switch(ModeStatus)
+  switch(ac.getMode())
   {
-    case 0x01:
+    case 0:
+      Button_Cold.color("#808080");
+      Button_Hot.color("#808080");
+      Button_Wind.color("#808080");
+      Button_Hum.color("#808080");
+      NUM2.icon("fab fa-adn");
+      NUM2.text("自动模式");
+    break;
+
+    case 1:
       Button_Cold.color("#00FF00");
       Button_Hot.color("#808080");
       Button_Wind.color("#808080");
       Button_Hum.color("#808080");
     break;
 
-    case 0x02:
+    case 2:
       Button_Cold.color("#808080");
-      Button_Hot.color("#FF0000");
+      Button_Hot.color("#808080");
       Button_Wind.color("#808080");
-      Button_Hum.color("#808080");
+      Button_Hum.color("#0000FF");
     break;
 
-    case 0x04:
+    case 3:
       Button_Cold.color("#808080");
       Button_Hot.color("#808080");
       Button_Wind.color("#EE00EE");
       Button_Hum.color("#808080");
     break;
 
-    case 0x08:
+    case 4:
       Button_Cold.color("#808080");
-      Button_Hot.color("#808080");
+      Button_Hot.color("#FF0000");
       Button_Wind.color("#808080");
-      Button_Hum.color("#0000FF");
+      Button_Hum.color("#808080");
     break;
   }
 
@@ -352,31 +325,36 @@ void heartbeat()
       Button_save.print("on");
     break;
   }
-  NUM1.print(nowfan);
-  NUM2.print(nowtemp);
-  Slider1.print(nowtemp);
-  Slider2.print(nowfan);
+  if(ac.getFan() == 0) NUM1.text("自动风速");
+  else NUM1.text("手动风速");
+  NUM1.print(ac.getFan());
+  NUM2.print(ac.getTemp());
+  Slider1.print(ac.getTemp());
+  Slider2.print(ac.getFan());
 }
 
 //空调风速
 void slider2_callback(int32_t value)
 {
   nowfan=value;
-  Blinker.vibrate(50);
-  NUM1.print(nowfan);
+  Blinker.vibrate(1000);
+
   ac.setFan(nowfan);
-  ac.setXFan(true);
   ac.send();
+
+  heartbeat();
 }
 
 //空调温度
 void slider1_callback(int32_t value)
 {
   nowtemp=value;
-  Blinker.vibrate(50);
-  NUM2.print(nowtemp);
+  Blinker.vibrate(1000);
+
   ac.setTemp(nowtemp);
   ac.send();
+
+  heartbeat();
 }
 
 void setup()
@@ -401,4 +379,5 @@ void setup()
 void loop()
 {
   Blinker.run(); 
+  WiFi.setAutoReconnect(true);
 }
