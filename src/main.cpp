@@ -6,9 +6,9 @@
 #include <ir_Gree.h>
 #include <Blinker.h>
 
-char auth[] = "3649c8c6ee84";
-char ssid[] = "TP-LINK_7F78";
-char pswd[] = "321162955";
+char auth[] = ""; //填写你的点灯科技项目的密钥
+char ssid[] = ""; //填写你的WiFi账号
+char pswd[] = ""; //填写你的WiFi密码
 
 BlinkerNumber NUM1("fan");
 BlinkerNumber NUM2("settemp");
