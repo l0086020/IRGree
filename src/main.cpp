@@ -6,7 +6,7 @@
 #include <ir_Gree.h>
 #include <Blinker.h>
 
-char auth[] = "839d1d3c4112";
+char auth[] = "3649c8c6ee84";
 char ssid[] = "TP-LINK_7F78";
 char pswd[] = "321162955";
 
@@ -51,7 +51,7 @@ void Button_power_callback(const String &state)
     KeyStatus &= ~(1<<0);
   }
 
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
   heartbeat();
 }
 
@@ -73,7 +73,7 @@ void Button_Light_callback(const String &state)
     KeyStatus &= ~(1<<1);
   }
 
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
   heartbeat();
 }
 
@@ -93,7 +93,7 @@ void Button_sxfan_callback(const String &state)
     KeyStatus &= ~(1<<2);
   }
 
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
   heartbeat();
 }
 
@@ -113,14 +113,14 @@ void Button_Save_callback(const String &state)
     KeyStatus &= ~(1<<3);
   }
 
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
   heartbeat();
 }
 
 //制冷模式
 void Button_Cold_callback(const String &state)
 {
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
   ac.setFan(1);
   ac.setMode(GREE_COOL);
   ac.send();
@@ -131,7 +131,7 @@ void Button_Cold_callback(const String &state)
 //制热模式
 void Button_Hot_callback(const String &state)
 {
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
 
   ac.setFan(1);
   ac.setMode(GREE_HEAT);
@@ -143,7 +143,7 @@ void Button_Hot_callback(const String &state)
 //送风模式
 void Button_Wind_callback(const String &state)
 {
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
 
   ac.setFan(1);
   ac.setMode(GREE_FAN);
@@ -155,7 +155,7 @@ void Button_Wind_callback(const String &state)
 //除湿模式
 void Button_Hum_callback(const String &state)
 {
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
 
   ac.setMode(GREE_DRY);
   ac.send();
@@ -326,7 +326,6 @@ void heartbeat()
     break;
   }
   if(ac.getFan() == 0) NUM1.text("自动风速");
-  else NUM1.text("手动风速");
   NUM1.print(ac.getFan());
   NUM2.print(ac.getTemp());
   Slider1.print(ac.getTemp());
@@ -337,7 +336,7 @@ void heartbeat()
 void slider2_callback(int32_t value)
 {
   nowfan=value;
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
 
   ac.setFan(nowfan);
   ac.send();
@@ -349,7 +348,7 @@ void slider2_callback(int32_t value)
 void slider1_callback(int32_t value)
 {
   nowtemp=value;
-  Blinker.vibrate(1000);
+  Blinker.vibrate(100);
 
   ac.setTemp(nowtemp);
   ac.send();
