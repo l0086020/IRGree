@@ -10,32 +10,50 @@ char auth[] = ""; //填写你的点灯科技项目的密钥
 char ssid[] = ""; //填写你的WiFi账号
 char pswd[] = ""; //填写你的WiFi密码
 
+//风速显示数值栏
 BlinkerNumber NUM1("fan");
+//设置的湿度显示栏
 BlinkerNumber NUM2("settemp");
 
+//App界面里的功能按键：电源开关、灯光开关、风速开关、节能开关
 BlinkerButton Button_power("btn-pwr");
 BlinkerButton Button_Light("btn-deng");
 BlinkerButton Button_sxfan("btn-sx");
 BlinkerButton Button_save("btn-save");
 
+//App界面里的空调模式按键，制冷开关、制热开关、送风开关、除湿开关
 BlinkerButton Button_Cold("btn-cold");
 BlinkerButton Button_Hot("btn-hot");
 BlinkerButton Button_Wind("btn-wind");
 BlinkerButton Button_Hum("btn-hum");
 
+//App界面里的湿度及风速滑块
 BlinkerSlider Slider1("ran-wen");
 BlinkerSlider Slider2("ran-fan");
 
+//定义红外数据发送的引脚端口
 const uint16_t kIrLed = 14;
+
+//默认上电状态
 uint8_t KeyStatus = 0x02;
+
+//实例化一个格力空调ac对象
 IRGreeAC ac(kIrLed);
 
+//心跳包
 void heartbeat(void);
 
 int nowtemp = 26;
 int nowfan = 2;
 
-//空调电源开关
+/**
+  * @file    main.cpp
+  * @brief   空调电源开关按键
+  * @param   Unknow
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_power_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
@@ -55,7 +73,14 @@ void Button_power_callback(const String &state)
   heartbeat();
 }
 
-//空调灯光
+/**
+  * @file    main.cpp
+  * @brief   空调灯光开关按键
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Light_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
@@ -77,7 +102,14 @@ void Button_Light_callback(const String &state)
   heartbeat();
 }
 
-//上下扇风
+/**
+  * @file    main.cpp
+  * @brief   上下扇风开关按键
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_sxfan_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
@@ -97,7 +129,14 @@ void Button_sxfan_callback(const String &state)
   heartbeat();
 }
 
-//节能开关
+/**
+  * @file    main.cpp
+  * @brief   节能开关按键
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Save_callback(const String &state)
 {
   if (state == BLINKER_CMD_ON)
@@ -117,7 +156,14 @@ void Button_Save_callback(const String &state)
   heartbeat();
 }
 
-//制冷模式
+/**
+  * @file    main.cpp
+  * @brief   制冷模式
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Cold_callback(const String &state)
 {
   Blinker.vibrate(100);
@@ -128,7 +174,14 @@ void Button_Cold_callback(const String &state)
   heartbeat();
 }
 
-//制热模式
+/**
+  * @file    main.cpp
+  * @brief   制热模式
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Hot_callback(const String &state)
 {
   Blinker.vibrate(100);
@@ -140,7 +193,14 @@ void Button_Hot_callback(const String &state)
   heartbeat();
 }
 
-//送风模式
+/**
+  * @file    main.cpp
+  * @brief   送风模式
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Wind_callback(const String &state)
 {
   Blinker.vibrate(100);
@@ -152,7 +212,14 @@ void Button_Wind_callback(const String &state)
   heartbeat();
 }
 
-//除湿模式
+/**
+  * @file    main.cpp
+  * @brief   除湿模式
+  * @param   Unknown
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void Button_Hum_callback(const String &state)
 {
   Blinker.vibrate(100);
@@ -163,7 +230,14 @@ void Button_Hum_callback(const String &state)
   heartbeat();
 }
 
-//心跳包
+/**
+  * @file    main.cpp
+  * @brief   用于检测连接和状态的心跳包
+  * @param   None
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void heartbeat()
 {
   switch(ac.getMode())
@@ -332,7 +406,14 @@ void heartbeat()
   Slider2.print(ac.getFan());
 }
 
-//空调风速
+/**
+  * @file    main.cpp
+  * @brief   空调风速滑动块
+  * @param   value：需要设置的风速档位0-3档
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void slider2_callback(int32_t value)
 {
   nowfan=value;
@@ -344,7 +425,14 @@ void slider2_callback(int32_t value)
   heartbeat();
 }
 
-//空调温度
+/**
+  * @file    main.cpp
+  * @brief   空调湿度滑动块
+  * @param   value：需要设置的温度数值：16-30度
+  * @return  None
+  * @version v1.0.0
+  * @date    2022-09-05
+  */
 void slider1_callback(int32_t value)
 {
   nowtemp=value;
